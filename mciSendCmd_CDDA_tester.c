@@ -15,6 +15,8 @@ int notifymsg=0;
 int from = 0;
 int to = 0;
 int timeformat = 0;
+int length_pos_q = 0;
+int track = 0;
 
 HANDLE hConsole;
 const char g_szClassName[] = "myWindowClass";
@@ -26,6 +28,61 @@ HWND hWndNotify = NULL;
 	MCI_SET_PARMS mciSetParms;
 	MCI_PLAY_PARMS mciPlayParms;
 	MCI_STATUS_PARMS mciStatusParms;
+
+DWORD statusLengthPosCDaudio(void)
+{
+	mciStatusParms.dwItem = MCI_STATUS_LENGTH;
+	mciStatusParms.dwTrack = track;
+
+	//Length
+	if (dwReturn = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID) &mciStatusParms)){
+		printf("MCI ERROR CODE: %d\n",dwReturn);
+		return (dwReturn);
+	}
+	else if(timeformat == 2){
+		printf("Length: %d\n",mciStatusParms.dwReturn);
+	}
+	else{
+		printf("Full media length: m%d s%d f%d\n",MCI_MSF_MINUTE(mciStatusParms.dwReturn),
+								MCI_MSF_SECOND(mciStatusParms.dwReturn),
+								MCI_MSF_FRAME(mciStatusParms.dwReturn));
+	}
+
+	//Track lenght
+	if (dwReturn = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID) &mciStatusParms)){
+		printf("MCI ERROR CODE: %d\n",dwReturn);
+		return (dwReturn);
+	}
+	else if(timeformat == 2){
+		printf("Track %d length: %d\n", track, mciStatusParms.dwReturn);
+	}
+	else{
+		printf("Track %d length: m%d s%d f%d\n", track, MCI_MSF_MINUTE(mciStatusParms.dwReturn),
+								MCI_MSF_SECOND(mciStatusParms.dwReturn),
+								MCI_MSF_FRAME(mciStatusParms.dwReturn));
+	}
+
+	mciStatusParms.dwItem = MCI_STATUS_POSITION;
+	if (dwReturn = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID) &mciStatusParms)){
+		printf("MCI ERROR CODE: %d\n",dwReturn);
+		return (dwReturn);
+	}
+	else if(timeformat == 2){
+		printf("Track %d position: %d\n", track,mciStatusParms.dwReturn);
+	}
+	else if(timeformat == 1){
+		printf("Track %d position: t%d m%d s%d f%d\n", track, MCI_TMSF_TRACK(mciStatusParms.dwReturn),
+								MCI_TMSF_MINUTE(mciStatusParms.dwReturn),
+								MCI_TMSF_SECOND(mciStatusParms.dwReturn),
+								MCI_TMSF_FRAME(mciStatusParms.dwReturn));
+	}
+	else{
+		printf("Track %d position: m%d s%d f%d\n", track, MCI_MSF_MINUTE(mciStatusParms.dwReturn),
+								MCI_MSF_SECOND(mciStatusParms.dwReturn),
+								MCI_MSF_FRAME(mciStatusParms.dwReturn));
+	}
+	return (0);
+}
 
 DWORD statusTracksCDaudio(void)
 {
@@ -278,6 +335,26 @@ int cmdInterp (void)
 		}
 	}
 
+	//Query track length & track position
+	printf("Query for track length and position? (Y)es (N)o: ");
+	while(1){
+		scanf("%c", &buffer);
+		if(buffer == 'N' || buffer == 'n'){
+			break;
+		}
+		if(buffer == 'Y' || buffer == 'y'){
+			length_pos_q = 1;
+			break;
+		}
+	}
+	if(length_pos_q){
+		printf("Input track no. for length and position query: ");
+		scanf("%d", &track);
+		SetConsoleTextAttribute(hConsole, 8); // gray
+		printf("Selected track: %d\n\n" ,track);
+		SetConsoleTextAttribute(hConsole, 7); // default color
+	}
+
 	//Query play from-to and notify message
 	printf("0 = MCI_PLAY NULL.\n");
 	printf("Input play from number: ");
@@ -415,8 +492,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	freopen("CONIN$", "r", stdin); // Direct input to console
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE); // For text color updates
 	cmdInterp();
-
 	statusTracksCDaudio(); // Get number of tracks
+	if(length_pos_q){
+		statusLengthPosCDaudio();
+		length_pos_q = 0;
+		track = 0;
+	}
 	SetConsoleTextAttribute(hConsole, 6); // yellow
 	printf("Playing from: %d to: %d\n", from, to);
 	if(!timeformat)printf("Time Format: MSF\n\n");
@@ -489,6 +570,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 				printf( "MCI_CLOSE\n" );
 				cmdInterp();
 				statusTracksCDaudio();
+				if(length_pos_q){
+					statusLengthPosCDaudio();
+					length_pos_q = 0;
+					track = 0;
+				}
 				SetConsoleTextAttribute(hConsole, 6); // yellow
 				printf("Playing from: %d to: %d\n", from, to);
 				if(!timeformat)printf("Time Format: MSF\n\n");
