@@ -5,6 +5,7 @@ Added query for:
 - MCI_STATUS_LENGTH
 - MCI_STATUS_LENGTH -> MCI_TRACK
 - MCI_STATUS_POSITION -> MCI_TRACK
+
 And also included a mciSendString tester for completeness.
 
 A preliminary and very simple mci command tester/player for mci cdaudio device. (Still missing a lot of commands but the most basic ones are implemented.) It is useful for analyzing how the mcicda device works on Win9x/XP vs. Vista+ and for developing cdda emulation. In theory it should run on any Windows version from Win9x - Win10(and 11?)...
