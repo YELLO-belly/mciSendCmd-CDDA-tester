@@ -28,6 +28,51 @@ HWND hWndNotify = NULL;
 	MCI_SET_PARMS mciSetParms;
 	MCI_PLAY_PARMS mciPlayParms;
 	MCI_STATUS_PARMS mciStatusParms;
+	MCI_SYSINFO_PARMS mciSysinfoParms;
+	MCI_INFO_PARMS mciInfoParms;
+
+DWORD infoCDaudio(void) // Device must be opened first
+{
+	char InfoRet[128];
+
+	mciInfoParms.lpstrReturn = InfoRet;
+	mciInfoParms.dwRetSize = 128;
+
+	if (dwReturn = mciSendCommand(wDeviceID, MCI_INFO, MCI_INFO_MEDIA_IDENTITY, (DWORD)(LPVOID) &mciInfoParms)){
+		printf("MCI ERROR CODE: %d\n",dwReturn);
+		return (dwReturn);
+	}
+	printf("Info media identity: %s\n", InfoRet);
+
+	if (dwReturn = mciSendCommand(wDeviceID, MCI_INFO, MCI_INFO_PRODUCT, (DWORD)(LPVOID) &mciInfoParms)){
+		printf("MCI ERROR CODE: %d\n",dwReturn);
+		return (dwReturn);
+	}
+	printf("Info product: %s\n", InfoRet);
+}
+
+DWORD sysinfoCDaudio(void) // Can be used before opening device
+{
+	CHAR SysInfoRet[128];
+	int retnum;
+	mciSysinfoParms.wDeviceType = MCI_DEVTYPE_CD_AUDIO;
+	mciSysinfoParms.lpstrReturn = SysInfoRet;
+	mciSysinfoParms.dwRetSize = 128;
+	mciSysinfoParms.dwNumber = 1;
+
+	if (dwReturn = mciSendCommand(wDeviceID, MCI_SYSINFO, MCI_SYSINFO_QUANTITY, (DWORD)(LPVOID) &mciSysinfoParms)){
+		printf("MCI ERROR CODE: %d\n",dwReturn);
+		return (dwReturn);
+	}
+	retnum = atoi(SysInfoRet);
+	printf("Sysinfo quantity: %d\n", retnum);
+
+	if (dwReturn = mciSendCommand(wDeviceID, MCI_SYSINFO, MCI_SYSINFO_NAME, (DWORD)(LPVOID) &mciSysinfoParms)){
+		printf("MCI ERROR CODE: %d\n",dwReturn);
+		return (dwReturn);
+	}
+	printf("Sysinfo name: %s\n", SysInfoRet);
+}
 
 DWORD statusLengthPosCDaudio(void)
 {
