@@ -107,6 +107,21 @@ DWORD statusLengthPosCDaudio(void)
 								MCI_MSF_FRAME(mciStatusParms.dwReturn));
 	}
 
+	//Track type
+	mciStatusParms.dwItem = MCI_CDA_STATUS_TYPE_TRACK;
+	
+	if (dwReturn = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID) &mciStatusParms)){
+		printf("MCI ERROR CODE: %d\n",dwReturn);
+		return (dwReturn);
+	}
+	else if(mciStatusParms.dwReturn == MCI_CDA_TRACK_AUDIO){
+		printf("Track %d type is: audio\n",track);
+	}
+	else if(mciStatusParms.dwReturn == MCI_CDA_TRACK_OTHER){
+		printf("Track %d type is: other\n",track);
+	}
+
+	//Trak position
 	mciStatusParms.dwItem = MCI_STATUS_POSITION;
 	if (dwReturn = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID) &mciStatusParms)){
 		printf("MCI ERROR CODE: %d\n",dwReturn);
